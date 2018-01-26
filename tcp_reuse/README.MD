@@ -1,7 +1,7 @@
 ### Usage:
-1.run server: go run server.go
-2.run client: go run client.go
-3.multiple telnet client: telnet localhost 8889
+1. run server: go run server.go
+2. run client: go run client.go
+3. multiple telnet client: telnet localhost 8889
 
 #### Intro:
 一个简单的TCP连接多路复用
