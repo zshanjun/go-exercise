@@ -3,21 +3,26 @@ package engine
 import "log"
 
 type ConcurrentEngine struct {
-	Scheduler Scheduler
+	Scheduler   Scheduler
 	WorkerCount int
 }
 
 type Scheduler interface {
+	ReadyNotifier
 	Submit(request Request)
-	ConfigMasterWorkerChan(chan Request)
+	WorkerChan() chan Request
+	Run()
 }
 
-func (c ConcurrentEngine) Run (seeds ...Request) {
-	in := make(chan Request)
+type ReadyNotifier interface {
+	WorkerReady(chan Request)
+}
+
+func (c ConcurrentEngine) Run(seeds ...Request) {
 	out := make(chan ParseResult)
-	c.Scheduler.ConfigMasterWorkerChan(in)
+	c.Scheduler.Run()
 	for i := 0; i < c.WorkerCount; i++ {
-		createWorker(in, out)
+		createWorker(c.Scheduler.WorkerChan(), out, c.Scheduler)
 	}
 
 	for _, r := range seeds {
@@ -26,7 +31,7 @@ func (c ConcurrentEngine) Run (seeds ...Request) {
 
 	itemCount := 0
 	for {
-		result := <- out
+		result := <-out
 		for _, item := range result.Items {
 			log.Printf("Got item #%d: %v", itemCount, item)
 		}
@@ -38,10 +43,12 @@ func (c ConcurrentEngine) Run (seeds ...Request) {
 	}
 }
 
-func createWorker(in chan Request, out chan ParseResult)  {
+func createWorker(in chan Request, out chan ParseResult, ready ReadyNotifier) {
 	go func() {
 		for {
-			request := <- in
+			// tell scheduler I'm ready
+			ready.WorkerReady(in)
+			request := <-in
 			result, err := worker(request)
 			if err != nil {
 				continue

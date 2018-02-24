@@ -1,15 +1,13 @@
 package engine
 
 import (
-	"zshanjun/go-exercise/crawler/fetcher"
-	"log"
 	"fmt"
+	"log"
+	"zshanjun/go-exercise/crawler/fetcher"
 )
 
 type SimpleEngine struct {
-
 }
-
 
 func (s SimpleEngine) Run(seeds ...Request) {
 	var requests []Request
